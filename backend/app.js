@@ -15,7 +15,11 @@ console.log("NEW CODE RUNNING 🚀");
 
 
 app.use(cors({
-    origin: true,
+    origin: [
+        "https://soen-ho34e96zk-yagyarajpandey99-4607s-projects.vercel.app",
+        "https://soen-green.vercel.app",
+        "http://localhost:5173"
+    ],
     credentials: true
 }));
 
