@@ -1,22 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 * {
-  margin: 0%;
-  padding: 0%;
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
 }
 
-html,
-body {
+html, body, #root {
   height: 100%;
   width: 100%;
+  font-family: 'Inter', sans-serif;
+  background-color: #0F172A;
+  color: #E2E8F0;
 }
 
-.message-box{
-  scroll-behavior: smooth;
-}
-.message-box::-webkit-scrollbar{
-  display: none;
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #1E293B; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+.message-box { scroll-behavior: smooth; }
+.message-box::-webkit-scrollbar { display: none; }
+
+/* Monaco editor container */
+.monaco-container { border-radius: 0.75rem; overflow: hidden; }
+
+/* Premium input utility */
+@layer components {
+  .input-premium {
+    @apply w-full px-4 py-3 rounded-xl bg-gray-800 text-white placeholder-gray-400 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-500 transition-all text-sm;
+  }
 }

@@ -22,24 +22,24 @@ const SimpleAI = () => {
     };
 
     return (
-        <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg">
-            <h2 className="text-2xl font-bold mb-4 text-center">
+        <div className="max-w-2xl mx-auto p-6 bg-gray-900 rounded-xl shadow-lg border border-gray-700">
+            <h2 className="text-2xl font-bold mb-4 text-center text-white">
                 ⚡ Frontend AI Assistant
             </h2>
-            <p className="text-gray-600 mb-6 text-center">
+            <p className="text-gray-400 mb-6 text-center">
                 Direct client-side Gemini AI integration
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                         Ask me anything about coding:
                     </label>
                     <textarea
                         value={prompt}
                         onChange={(e) => setPrompt(e.target.value)}
                         placeholder="e.g., Create a React component for a todo list..."
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="input-premium resize-none"
                         rows="3"
                         disabled={isLoading}
                     />
@@ -47,7 +47,7 @@ const SimpleAI = () => {
                 <button
                     type="submit"
                     disabled={!prompt.trim() || isLoading}
-                    className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-400 hover:to-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium"
                 >
                     {isLoading ? (
                         <div className="flex items-center justify-center">
@@ -61,16 +61,16 @@ const SimpleAI = () => {
             </form>
 
             {response && (
-                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                    <h3 className="font-semibold text-gray-800 mb-2">AI Response:</h3>
-                    <div className="whitespace-pre-wrap text-gray-700">
+                <div className="mt-6 p-4 bg-gray-800 rounded-xl border border-gray-700">
+                    <h3 className="font-semibold text-gray-200 mb-2">AI Response:</h3>
+                    <div className="whitespace-pre-wrap text-gray-300 text-sm">
                         {response}
                     </div>
                 </div>
             )}
 
             <div className="mt-6 text-sm text-gray-500">
-                <p>💡 <strong>Tip:</strong> This component uses the official @google/genai package directly in the browser.</p>
+                <p>💡 This component uses the official @google/genai package directly in the browser.</p>
                 <p>🔑 Make sure to set your VITE_GOOGLE_AI_KEY in the .env file.</p>
             </div>
         </div>

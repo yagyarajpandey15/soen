@@ -166,7 +166,7 @@ const AIChat = ({ isOpen, onClose, onCodeGenerated }) => {
                     animation: aiPulse 2s ease-in-out infinite;
                 }
             `}</style>
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl h-5/6 flex flex-col">
+            <div className="bg-gray-900 rounded-xl shadow-2xl w-full max-w-4xl h-5/6 flex flex-col border border-gray-700">
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-t-lg">
                     <div className="flex items-center space-x-3">
@@ -210,17 +210,17 @@ const AIChat = ({ isOpen, onClose, onCodeGenerated }) => {
                 </div>
 
                 {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-900">
                     {(messages || []).map((message) => (
                         <div
                             key={message.id}
                             className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
                         >
                             <div
-                                className={`max-w-3xl rounded-lg p-3 ${
+                                className={`max-w-3xl rounded-xl p-3 ${
                                     message.type === 'user'
-                                        ? 'bg-blue-500 text-white'
-                                        : 'bg-gray-100 text-gray-800'
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-gray-800 text-gray-100 border border-gray-700'
                                 }`}
                             >
                                 <div className="prose prose-sm max-w-none">
@@ -233,11 +233,11 @@ const AIChat = ({ isOpen, onClose, onCodeGenerated }) => {
                                 
                                 {/* Show file tree if AI generated code */}
                                 {message.fileTree && (
-                                    <div className="mt-3 p-3 bg-gray-50 rounded border">
-                                        <h4 className="font-semibold text-sm mb-2 text-green-600">
+                                    <div className="mt-3 p-3 bg-gray-700 rounded-lg border border-gray-600">
+                                        <h4 className="font-semibold text-sm mb-2 text-green-400">
                                             🚀 Generated Project Structure
                                         </h4>
-                                        <div className="text-xs text-gray-600 mb-3">
+                                        <div className="text-xs text-gray-300 mb-3">
                                             <p>Files: {Object.keys(message.fileTree).length}</p>
                                             {message.buildCommand && (
                                                 <p>Build: {message.buildCommand.mainItem} {message.buildCommand.commands?.join(' ')}</p>
@@ -256,7 +256,7 @@ const AIChat = ({ isOpen, onClose, onCodeGenerated }) => {
                                     </div>
                                 )}
                                 
-                                <div className={`text-xs mt-2 flex justify-between items-center ${message.type === 'user' ? 'text-blue-100' : 'text-gray-500'}`}>
+                                <div className={`text-xs mt-2 flex justify-between items-center ${message.type === 'user' ? 'text-blue-200' : 'text-gray-500'}`}>
                                     <span>{formatTimestamp(message.timestamp)}</span>
                                     {message.source && (
                                         <span className={`px-2 py-1 rounded text-xs ${
@@ -274,17 +274,17 @@ const AIChat = ({ isOpen, onClose, onCodeGenerated }) => {
                     
                     {isLoading && (
                         <div className="flex justify-start">
-                            <div className="bg-gray-100 rounded-lg p-3">
+                            <div className="bg-gray-800 border border-gray-700 rounded-xl p-3">
                                 <div className="flex items-center gap-3">
                                     <div className="relative flex items-center justify-center">
                                         <div className="w-6 h-6 rounded-full border-2 border-blue-400 border-t-transparent ai-spin"></div>
                                         <div className="absolute w-10 h-10 rounded-full border-2 border-blue-200 opacity-50 ai-ping"></div>
                                     </div>
-                                    <div className="flex items-center text-sm text-gray-600">
+                                    <div className="flex items-center text-sm text-gray-400">
                                         <span className="mr-1 ai-pulse">Generating response</span>
-                                        <span className="inline-block w-1.5 h-1.5 bg-gray-500 rounded-full ai-bounce-1 ml-1"></span>
-                                        <span className="inline-block w-1.5 h-1.5 bg-gray-500 rounded-full ai-bounce-2 ml-1"></span>
-                                        <span className="inline-block w-1.5 h-1.5 bg-gray-500 rounded-full ai-bounce-3 ml-1"></span>
+                                        <span className="inline-block w-1.5 h-1.5 bg-gray-400 rounded-full ai-bounce-1 ml-1"></span>
+                                        <span className="inline-block w-1.5 h-1.5 bg-gray-400 rounded-full ai-bounce-2 ml-1"></span>
+                                        <span className="inline-block w-1.5 h-1.5 bg-gray-400 rounded-full ai-bounce-3 ml-1"></span>
                                     </div>
                                 </div>
                             </div>
@@ -294,26 +294,25 @@ const AIChat = ({ isOpen, onClose, onCodeGenerated }) => {
                 </div>
 
                 {/* Input */}
-                <div className="border-t p-4">
+                <div className="border-t border-gray-700 p-4 bg-gray-900">
                     <div className="flex space-x-3">
                         <textarea
                             value={inputMessage}
                             onChange={(e) => setInputMessage(e.target.value)}
                             onKeyDown={handleKeyDown}
                             placeholder="Ask me to create components, write code, or help with your project..."
-                            className="flex-1 border border-gray-300 rounded-lg p-3 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="flex-1 input-premium resize-none"
                             rows="2"
                             disabled={isLoading}
                         />
                         <button
                             onClick={sendMessage}
                             disabled={!inputMessage.trim() || isLoading}
-                            className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="px-5 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl transition-colors"
                         >
                             {isLoading ? (
                                 <div className="flex items-center gap-2">
                                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                    <span className="text-sm hidden sm:inline">Generating...</span>
                                 </div>
                             ) : (
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -325,7 +324,7 @@ const AIChat = ({ isOpen, onClose, onCodeGenerated }) => {
                     <div className="mt-2 text-xs text-gray-500 flex items-center justify-between">
                         <span>Press Enter to send, Shift+Enter for new line</span>
                         {isLoading && (
-                            <span className="text-blue-600 flex items-center gap-2" aria-live="polite">
+                            <span className="text-blue-400 flex items-center gap-2" aria-live="polite">
                                 <span className="relative inline-flex">
                                     <span className="w-3 h-3 rounded-full bg-blue-400 animate-ping"></span>
                                     <span className="absolute w-3 h-3 rounded-full bg-blue-500 opacity-75"></span>

@@ -5,8 +5,8 @@ import axios from '../config/axios'
 import { initializeSocket, receiveMessage, sendMessage } from '../config/socket'
 import Markdown from 'markdown-to-jsx'
 import hljs from 'highlight.js'
-import { getWebContainer, killActiveProcess, setActiveProcess } from '../config/webContainer'
 import VirtualBoxModal from '../components/VirtualBoxModal'
+import CodeRunner from '../components/CodeRunner'
 
 function SyntaxHighlightedCode(props) {
     const ref = useRef(null)
@@ -39,8 +39,11 @@ const Project = () => {
     const [iframeUrl, setIframeUrl] = useState(null)
     const [runProcess, setRunProcess] = useState(null)
     const [runLogs, setRunLogs] = useState('')
+    const [runSuccess, setRunSuccess] = useState(null) // true | false | null
     const [isRunning, setIsRunning] = useState(false)
-    const [sandboxFileTree, setSandboxFileTree] = useState(null) // auto-trigger sandbox
+    const [sandboxFileTree, setSandboxFileTree] = useState(null)
+    const [execLanguage, setExecLanguage] = useState('javascript')
+    const [showCodeRunner, setShowCodeRunner] = useState(false)
 
     // Fetch project if not in location state
     useEffect(() => {
@@ -128,69 +131,39 @@ const Project = () => {
         }
     }
 
-    // Run the current fileTree in the inline WebContainer
+    // Run current file via backend secure spawn API
     const runInContainer = async () => {
-        if (!webContainer || Object.keys(fileTree).length === 0) return
-
-        const UNSUPPORTED = ['.java', '.py', '.rb', '.go', '.rs', '.cpp', '.c', '.cs', '.php']
-        const badFile = Object.keys(fileTree).find(f => UNSUPPORTED.some(ext => f.endsWith(ext)))
-        if (badFile) {
-            setRunLogs(`❌ Unsupported language: ${badFile}\nWebContainer only supports JavaScript/Node.js and HTML/CSS/JS.\n`)
+        if (!currentFile || !fileTree[currentFile]) {
+            setRunLogs('❌ No file selected. Click a file in the explorer first.')
+            setRunSuccess(false)
             return
         }
 
+        const code = fileTree[currentFile]?.file?.contents || ''
+        if (!code.trim()) {
+            setRunLogs('❌ Selected file is empty.')
+            setRunSuccess(false)
+            return
+        }
+
+        // Detect language from file extension
+        const ext = currentFile.split('.').pop()
+        const lang = ext === 'py' ? 'python' : 'javascript'
+
         setIsRunning(true)
         setRunLogs('')
-        setIframeUrl(null)
-
-        const appendLog = (t) => setRunLogs(prev => prev + t)
+        setRunSuccess(null)
 
         try {
-            // Kill previous process first so port is released
-            appendLog('🛑 Stopping previous process...\n')
-            killActiveProcess()
-            await new Promise(r => setTimeout(r, 300))
-
-            appendLog('📁 Mounting files...\n')
-            await webContainer.mount({
-                ...fileTree,
-                '.npmrc': { file: { contents: 'yes=true\nfund=false\naudit=false\nloglevel=error\n' } }
-            })
-
-            appendLog('📦 Installing dependencies...\n')
-            const install = await webContainer.spawn(
-                'npm', ['install', '--yes', '--no-fund', '--no-audit', '--loglevel=error'],
-                { env: { CI: 'true', npm_config_yes: 'true' } }
-            )
-            install.output.pipeTo(new WritableStream({ write: appendLog }))
-            const code = await install.exit
-            if (code !== 0) throw new Error(`npm install failed (exit ${code})`)
-            appendLog('✅ Dependencies installed\n')
-
-            let startArgs = ['start']
-            try {
-                const pkg = JSON.parse(fileTree['package.json']?.file?.contents || '{}')
-                const s = pkg.scripts || {}
-                if (s.dev)        startArgs = ['run', 'dev']
-                else if (s.start) startArgs = ['start']
-                else if (s.serve) startArgs = ['run', 'serve']
-            } catch { /* ignore */ }
-
-            appendLog(`\n▶️  npm ${startArgs.join(' ')}...\n`)
-            const proc = await webContainer.spawn('npm', startArgs, {
-                env: { CI: 'true', NODE_ENV: 'development' }
-            })
-            setRunProcess(proc)
-            setActiveProcess(proc)
-            proc.output.pipeTo(new WritableStream({ write: appendLog }))
-
-            webContainer.on('server-ready', (port, url) => {
-                appendLog(`\n✅ Ready at ${url}\n`)
-                setIframeUrl(url)
-                setIsRunning(false)
-            })
+            const response = await axios.post('/execute/run', { code, language: lang })
+            const { success, output, error } = response.data
+            setRunSuccess(success)
+            setRunLogs(success ? output : error)
         } catch (err) {
-            appendLog(`\n❌ ${err.message}\n`)
+            setRunSuccess(false)
+            const msg = err.response?.data?.error || err.message || 'Unknown error'
+            setRunLogs(`❌ ${msg}`)
+        } finally {
             setIsRunning(false)
         }
     }
@@ -208,10 +181,6 @@ const Project = () => {
         if (!project || !projectId) return
 
         initializeSocket(projectId).catch(console.error)
-
-        getWebContainer().then(wc => {
-            if (wc) setWebContainer(wc)
-        }).catch(console.error)
 
         receiveMessage('project-message', data => {
             if (!data) return
@@ -284,7 +253,7 @@ const Project = () => {
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
                             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
-                            className='p-2 px-4 border-none outline-none flex-grow'
+                            className='p-2 px-4 border-none outline-none flex-grow bg-gray-800 text-white placeholder-gray-400'
                             type="text"
                             placeholder='Message... (use @ai to generate code)'
                         />
@@ -356,23 +325,26 @@ const Project = () => {
                             ))}
                         </div>
 
-                        <div className="actions flex gap-2 p-2 shrink-0">
+                        <div className="actions flex items-center gap-2 p-2 shrink-0">
+                            {/* Language indicator (auto-detected from file extension) */}
+                            {currentFile && (
+                                <span className="text-xs px-2 py-1 bg-slate-300 rounded font-mono text-slate-700">
+                                    {currentFile.endsWith('.py') ? '🐍 python' : '⚡ javascript'}
+                                </span>
+                            )}
                             {/* Run in sandbox button */}
                             {Object.keys(fileTree).length > 0 && (
                                 <button
                                     onClick={() => setSandboxFileTree({ ...fileTree })}
                                     className='px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-sm rounded flex items-center gap-1'>
-                                    <i className="ri-play-fill"></i> Run in Sandbox
+                                    <i className="ri-play-fill"></i> Sandbox
                                 </button>
                             )}
-                            {/* Inline run button */}
+                            {/* Toggle Code Runner panel */}
                             <button
-                                onClick={runInContainer}
-                                disabled={isRunning || Object.keys(fileTree).length === 0}
-                                className='px-3 py-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm rounded flex items-center gap-1'>
-                                {isRunning
-                                    ? <><i className="ri-loader-4-line animate-spin"></i> Running...</>
-                                    : <><i className="ri-terminal-line"></i> Run Inline</>}
+                                onClick={() => setShowCodeRunner(v => !v)}
+                                className={`px-3 py-1 text-sm rounded flex items-center gap-1 transition-colors ${showCodeRunner ? 'bg-blue-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}>
+                                <i className="ri-terminal-line"></i> {showCodeRunner ? 'Hide Runner' : 'Code Runner'}
                             </button>
                         </div>
                     </div>
@@ -410,10 +382,25 @@ const Project = () => {
                         )}
                     </div>
 
-                    {/* Inline run logs */}
+                    {/* Terminal output panel */}
                     {runLogs && (
-                        <div className="h-32 bg-gray-900 text-green-300 text-xs font-mono p-2 overflow-auto border-t border-gray-700">
-                            <pre className="whitespace-pre-wrap">{runLogs}</pre>
+                        <div className="h-40 bg-gray-900 text-xs font-mono p-2 overflow-auto border-t border-gray-700">
+                            <div className={`mb-1 text-xs font-semibold ${runSuccess ? 'text-green-400' : 'text-red-400'}`}>
+                                {runSuccess ? '✅ Output' : '❌ Error'}
+                            </div>
+                            <pre className={`whitespace-pre-wrap ${runSuccess ? 'text-green-300' : 'text-red-300'}`}>
+                                {runLogs}
+                            </pre>
+                        </div>
+                    )}
+
+                    {/* Code Runner panel */}
+                    {showCodeRunner && (
+                        <div className="h-96 border-t border-slate-700 overflow-hidden">
+                            <CodeRunner
+                                initialCode={currentFile ? (fileTree[currentFile]?.file?.contents || '') : ''}
+                                initialLanguage={currentFile?.endsWith('.py') ? 'python' : 'javascript'}
+                            />
                         </div>
                     )}
                 </div>
@@ -426,7 +413,7 @@ const Project = () => {
                                 type="text"
                                 value={iframeUrl}
                                 onChange={(e) => setIframeUrl(e.target.value)}
-                                className="flex-1 p-1 px-2 text-sm bg-white border border-slate-300 rounded"
+                                className="flex-1 p-1 px-2 text-sm bg-gray-800 text-white border border-gray-600 rounded placeholder-gray-400 outline-none focus:ring-1 focus:ring-blue-500"
                             />
                             <button onClick={() => setIframeUrl(null)} className="text-slate-500 hover:text-red-500">
                                 <i className="ri-close-line"></i>
