@@ -23,7 +23,8 @@ export const initializeSocket = (projectId) => {
                 query: {
                     projectId
                 },
-                transports: ['websocket', 'polling'], // Fallback transports
+                transports: ['websocket', 'polling'],
+                withCredentials: true, // send cookies cross-origin in production
                 timeout: 10000,
                 forceNew: true
             });

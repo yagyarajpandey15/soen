@@ -5,7 +5,8 @@ const axiosInstance = axios.create({
     headers: {
         'Content-Type': 'application/json'
     },
-    timeout: 70000, // 70s — supports long AI code generation responses
+    timeout: 70000,
+    withCredentials: true, // send cookies cross-origin in production
     validateStatus: (status) => status < 500
 });
 
