@@ -8,12 +8,15 @@ import { generateResult } from './services/ai.service.js';
 
 const port = process.env.PORT || 5000;
 
+// 🔥 CRITICAL FIX (MUST BE HERE)
+app.set("trust proxy", 1);
+
 const allowedOrigins = process.env.FRONTEND_URL
     ? [process.env.FRONTEND_URL]
     : ['http://localhost:5173'];
 
 const server = http.createServer(app);
-// Render requires headersTimeout > keepAliveTimeout
+
 server.timeout = 90000;
 server.keepAliveTimeout = 91000;
 server.headersTimeout = 92000;
@@ -27,13 +30,11 @@ const io = new Server(server, {
         },
         credentials: true
     },
-    // Render uses sticky sessions — these settings improve reliability
     transports: ['websocket', 'polling'],
     pingTimeout: 60000,
     pingInterval: 25000
 });
 
-// ✅ THIS IS REQUIRED
 server.listen(port, () => {
-  console.log("Server running on port " + port);
+    console.log("Server running on port " + port);
 });
