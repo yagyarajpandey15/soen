@@ -26,7 +26,7 @@ app.use(globalLimiter);
 
 app.use(cors({
     origin: [
-        "https://soen-ho34e96zk-yagyarajpandey99-4607s-projects.vercel.app",
+        "https://soen-9eje3vsyx-yagyarajpandey99-4607s-projects.vercel.app",
         "https://soen-green.vercel.app",
         "http://localhost:5173"
     ],
