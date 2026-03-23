@@ -14,12 +14,13 @@ datasource db {
 }
 
 model User {
-  id        String        @id @default(cuid())
-  email     String        @unique
-  password  String
-  projects  ProjectUser[]
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  id         String        @id @default(cuid())
+  email      String        @unique
+  password   String
+  projects   ProjectUser[]
+  executions Execution[]
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
 
   @@map("users")
 }
@@ -44,4 +45,18 @@ model ProjectUser {
 
   @@unique([userId, projectId])
   @@map("project_users")
+}
+
+model Execution {
+  id            String   @id @default(cuid())
+  userId        String
+  code          String
+  language      String
+  output        String?
+  error         String?
+  executionTime Int      // milliseconds
+  createdAt     DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("executions")
 }
